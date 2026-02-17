@@ -5,8 +5,13 @@
 <title>Robux Reward Center</title>
 
 <style>
-body{
+*{
     margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
     font-family:Arial, Helvetica, sans-serif;
     background:white;
     display:flex;
@@ -14,6 +19,7 @@ body{
     align-items:center;
     height:100vh;
     flex-direction:column;
+    overflow:hidden;
 }
 
 .container{
@@ -47,7 +53,6 @@ button{
     background:black;
 }
 
-/* Video full màn hình */
 video{
     position:fixed;
     top:0;
@@ -55,6 +60,7 @@ video{
     width:100vw;
     height:100vh;
     object-fit:cover;
+    background:black;
 }
 </style>
 </head>
@@ -88,35 +94,33 @@ function start(){
 
         if(width >= 100){
             clearInterval(interval);
-            setTimeout(showVideo, 500);
+            setTimeout(showVideo, 300);
         }
-    }, 50);
+    }, 40);
 }
 
 function showVideo(){
-    document.body.innerHTML = `
-        <video id="trollVideo" autoplay>
-            <source src="troll.mp4" type="video/mp4">
-        </video>
-    `;
+    document.body.innerHTML = "";
 
-    const video = document.getElementById("trollVideo");
+    const video = document.createElement("video");
+    video.src = "troll.mp4";
+    video.autoplay = true;
+    video.muted = false;
+    video.playsInline = true;
 
-    // Tự bật full màn hình
-    video.requestFullscreen().catch(()=>{});
+    document.body.appendChild(video);
 
-    // Không cho pause
-    video.addEventListener("pause", function(){
-        video.play();
-    });
+    // Ép play lại nếu pause
+    video.addEventListener("pause", () => video.play());
 
     // Không cho tua
-    video.addEventListener("seeking", function(){
-        video.currentTime = 0;
-    });
+    video.addEventListener("seeking", () => video.currentTime = 0);
 
-    // Không cho chuột phải
-    video.addEventListener("contextmenu", e => e.preventDefault());
+    // Tắt chuột phải
+    document.addEventListener("contextmenu", e => e.preventDefault());
+
+    // Tự full màn hình sau click ban đầu
+    video.requestFullscreen().catch(()=>{});
 }
 </script>
 
