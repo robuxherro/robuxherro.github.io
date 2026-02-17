@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Robux Reward Center</title>
+
 <style>
 body{
     margin:0;
@@ -14,9 +15,11 @@ body{
     height:100vh;
     flex-direction:column;
 }
+
 .container{
     text-align:center;
 }
+
 button{
     padding:15px 40px;
     font-size:18px;
@@ -25,25 +28,27 @@ button{
     background:black;
     color:white;
 }
+
 #loading{
     display:none;
     margin-top:20px;
     width:300px;
 }
-.bar{
-    width:0%;
-    height:20px;
-    background:black;
-}
+
 .progress{
     width:100%;
     height:20px;
     background:#ddd;
 }
+
+.bar{
+    width:0%;
+    height:20px;
+    background:black;
+}
 </style>
 </head>
-</style>
-</head>
+
 <body>
 
 <div class="container">
@@ -59,13 +64,11 @@ button{
     </div>
 </div>
 
-<video id="troll" width="0" height="0" autoplay>
-    <source src="troll.mp4" type="video/mp4">
-</video>
-
 <script>
 function start(){
-    document.getElementById("loading").style.display = "block";
+    document.querySelector("button").style.display="none";
+    document.getElementById("loading").style.display="block";
+
     let bar = document.getElementById("bar");
     let width = 0;
 
@@ -75,18 +78,17 @@ function start(){
 
         if(width >= 100){
             clearInterval(interval);
-            setTimeout(troll, 800);
+            setTimeout(showVideo, 500);
         }
     }, 50);
 }
 
-function troll(){
-    document.body.innerHTML = "";
-    let video = document.getElementById("troll");
-    video.width = window.innerWidth;
-    video.height = window.innerHeight;
-    document.body.appendChild(video);
-    video.play();
+function showVideo(){
+    document.body.innerHTML = `
+        <video autoplay controls style="width:100vw; height:100vh;">
+            <source src="troll.mp4" type="video/mp4">
+        </video>
+    `;
 }
 </script>
 
