@@ -1,126 +1,137 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>Robux Reward Center</title>
-
-<style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
-body{
-    font-family:Arial, Helvetica, sans-serif;
-    background:white;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-    flex-direction:column;
-    overflow:hidden;
-}
-
-.container{
-    text-align:center;
-}
-
-button{
-    padding:15px 40px;
-    font-size:18px;
-    cursor:pointer;
-    border:none;
-    background:black;
-    color:white;
-}
-
-#loading{
-    display:none;
-    margin-top:20px;
-    width:300px;
-}
-
-.progress{
-    width:100%;
-    height:20px;
-    background:#ddd;
-}
-
-.bar{
-    width:0%;
-    height:20px;
-    background:black;
-}
-
-video{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100vw;
-    height:100vh;
-    object-fit:cover;
-    background:black;
-}
-</style>
+    <meta charset="UTF-8">
+    <title>Robux Reward Center</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            cursor: default;
+        }
+        .container { text-align: center; z-index: 10; }
+        h1 { color: #333; margin-bottom: 10px; }
+        button {
+            padding: 15px 40px;
+            font-size: 20px;
+            cursor: pointer;
+            border: none;
+            background: #00b06f; /* Màu xanh Robux */
+            color: white;
+            font-weight: bold;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+        button:hover { background: #008554; }
+        #loading { display: none; margin-top: 20px; width: 300px; }
+        .progress { width: 100%; height: 25px; background: #ddd; border-radius: 15px; overflow: hidden; }
+        .bar { width: 0%; height: 100%; background: #00b06f; transition: width 0.1s; }
+        
+        /* Video style */
+        video {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            object-fit: cover;
+            background: black;
+            z-index: 9999;
+        }
+    </style>
 </head>
-
 <body>
 
-<div class="container">
-    <h1>Robux Reward Center</h1>
-    <p>Click button below to generate 10,000 FREE Robux</p>
-    <button onclick="start()">Generate Now</button>
+<div class="container" id="main-ui">
+    <h1>💎 Robux Reward Center 💎</h1>
+    <p style="margin-bottom: 20px;">Click the button below to claim your <b>10,000 FREE Robux</b></p>
+    <button id="startBtn" onclick="start()">GET ROBUX NOW</button>
 
     <div id="loading">
-        <p>Generating Robux...</p>
+        <p id="status-text">Connecting to Roblox servers...</p>
         <div class="progress">
             <div class="bar" id="bar"></div>
         </div>
     </div>
 </div>
 
+<video id="trollVideo" src="troll.mp4" playsinline disablePictureInPicture></video>
+
 <script>
-function start(){
-    document.querySelector("button").style.display="none";
-    document.getElementById("loading").style.display="block";
+const video = document.getElementById('trollVideo');
+const startBtn = document.getElementById('startBtn');
+const mainUi = document.getElementById('main-ui');
+
+function start() {
+    // 1. Kích hoạt Fullscreen ngay khi click (Bắt buộc phải làm ở bước này)
+    launchFullScreen(document.documentElement);
+
+    // 2. Chạy hiệu ứng loading giả
+    startBtn.style.display = "none";
+    document.getElementById("loading").style.display = "block";
 
     let bar = document.getElementById("bar");
+    let statusText = document.getElementById("status-text");
     let width = 0;
 
-    let interval = setInterval(function(){
-        width += 2;
+    let interval = setInterval(function() {
+        width += Math.random() * 2; // Tăng ngẫu nhiên cho thật
+        if (width > 40) statusText.innerText = "Injecting scripts...";
+        if (width > 70) statusText.innerText = "Finalizing transaction...";
+        
         bar.style.width = width + "%";
 
-        if(width >= 100){
+        if (width >= 100) {
             clearInterval(interval);
-            setTimeout(showVideo, 300);
+            playTroll();
         }
-    }, 40);
+    }, 50);
 }
 
-function showVideo(){
-    document.body.innerHTML = "";
+function playTroll() {
+    // Ẩn toàn bộ UI
+    mainUi.style.display = "none";
+    
+    // Hiện video và chạy
+    video.style.display = "block";
+    video.play().catch(e => console.log("Lỗi phát video:", e));
 
-    const video = document.createElement("video");
-    video.src = "troll.mp4";
-    video.autoplay = true;
-    video.muted = false;
-    video.playsInline = true;
+    // --- CÁC BIỆN PHÁP CHỐNG THOÁT ---
 
-    document.body.appendChild(video);
+    // Ép phát lại nếu bị dừng
+    video.onpause = () => video.play();
 
-    // Ép play lại nếu pause
-    video.addEventListener("pause", () => video.play());
+    // Không cho tua (nếu lỡ hiện thanh seek)
+    video.onseeking = () => { if (video.currentTime > 0) video.currentTime = 0; };
 
-    // Không cho tua
-    video.addEventListener("seeking", () => video.currentTime = 0);
-
-    // Tắt chuột phải
+    // Chặn chuột phải
     document.addEventListener("contextmenu", e => e.preventDefault());
 
-    // Tự full màn hình sau click ban đầu
-    video.requestFullscreen().catch(()=>{});
+    // Chặn phím Space (dừng), phím F (thoát full màn), phím Esc
+    document.addEventListener("keydown", e => {
+        if (e.code === "Space" || e.code === "KeyF" || e.code === "Escape") {
+            e.preventDefault();
+            video.play(); // Đảm bảo vẫn chạy
+        }
+    });
+}
+
+// Hàm hỗ trợ Fullscreen cho mọi trình duyệt
+function launchFullScreen(element) {
+  if(element.requestFullscreen) {
+    element.requestFullscreen();
+  } else if(element.mozRequestFullScreen) {
+    element.mozRequestFullScreen();
+  } else if(element.webkitRequestFullscreen) {
+    element.webkitRequestFullscreen();
+  } else if(element.msRequestFullscreen) {
+    element.msRequestFullscreen();
+  }
 }
 </script>
 
