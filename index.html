@@ -46,6 +46,16 @@ button{
     height:20px;
     background:black;
 }
+
+/* Video full màn hình */
+video{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100vw;
+    height:100vh;
+    object-fit:cover;
+}
 </style>
 </head>
 
@@ -85,10 +95,28 @@ function start(){
 
 function showVideo(){
     document.body.innerHTML = `
-        <video autoplay controls style="width:100vw; height:100vh;">
+        <video id="trollVideo" autoplay>
             <source src="troll.mp4" type="video/mp4">
         </video>
     `;
+
+    const video = document.getElementById("trollVideo");
+
+    // Tự bật full màn hình
+    video.requestFullscreen().catch(()=>{});
+
+    // Không cho pause
+    video.addEventListener("pause", function(){
+        video.play();
+    });
+
+    // Không cho tua
+    video.addEventListener("seeking", function(){
+        video.currentTime = 0;
+    });
+
+    // Không cho chuột phải
+    video.addEventListener("contextmenu", e => e.preventDefault());
 }
 </script>
 
