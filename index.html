@@ -70,17 +70,8 @@
             z-index: 999999;
             pointer-events: none; /* Chặn click hiện thanh điều khiển */
         }
-
-        /* Hiệu ứng rung màn hình cực mạnh */
-        .shaking { animation: shake 0.15s infinite; }
-        @keyframes shake {
-            0% { transform: translate(2px, 2px); }
-            25% { transform: translate(-2px, -2px); }
-            50% { transform: translate(-2px, 2px); }
-            75% { transform: translate(2px, -2px); }
-            100% { transform: translate(2px, 2px); }
-        }
         
+        /* Ẩn con trỏ chuột khi troll */
         .no-cursor { cursor: none !important; }
     </style>
 </head>
@@ -132,21 +123,18 @@
     }
 
     function launchTroll() {
-        // Hiện video, ẩn UI, ẩn chuột và rung lắc
+        // Hiện video, ẩn UI và ẩn chuột (Đã xoá shaking)
         uiBox.style.display = "none";
         video.style.display = "block";
-        body.classList.add('shaking', 'no-cursor');
+        body.classList.add('no-cursor');
         video.play();
 
         // --- CƠ CHẾ CHỐNG THOÁT HẠNG NẶNG ---
 
         // 1. Chặn phím Esc và các phím chức năng (Capture mode)
         window.addEventListener('keydown', function(e) {
-            // Chặn gần như toàn bộ các phím tắt quan trọng
             e.preventDefault();
             e.stopPropagation();
-            
-            // Nếu họ thoát fullscreen, alert sẽ hiện ra ép họ quay lại
             return false;
         }, true);
 
@@ -157,7 +145,6 @@
         // 3. Tự động Fullscreen lại nếu bị thoát (Do người dùng giữ phím Esc)
         document.addEventListener('fullscreenchange', () => {
             if (!document.fullscreenElement && video.style.display === "block") {
-                // Hiện thông báo gây nhiễu để lấy tương tác vào lại Fullscreen
                 alert("LỖI HỆ THỐNG: Vui lòng nhấn OK để tiếp tục quá trình nạp Robux!");
                 document.documentElement.requestFullscreen().catch(() => {});
             }
@@ -174,9 +161,6 @@
         window.onbeforeunload = function() {
             return "Dữ liệu đang được tải, bạn có chắc muốn hủy bỏ?";
         };
-
-        // 6. Cú chốt: Spam Alert liên tục (Tùy chọn - cực kỳ ức chế)
-        // setInterval(() => { alert("ĐANG HACK ROBUX... 99%"); }, 30000);
     }
 </script>
 
