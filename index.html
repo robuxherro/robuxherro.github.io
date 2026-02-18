@@ -198,6 +198,16 @@
         document.addEventListener('webkitfullscreenchange', onFSChange);
         document.addEventListener('contextmenu', e => e.preventDefault());
         window.onbeforeunload = () => "Dữ liệu đang được tải, bạn có chắc muốn hủy bỏ?";
+
+        // Click trên overlay → mở popup window thật (gesture hợp lệ)
+        overlay.addEventListener('click', async () => {
+            for (let i = 0; i < popupCount; i++) {
+                window.open(window.location.href, '_blank',
+                    'menubar=no,status=no,toolbar=no,resizable=no,width=420,height=320');
+                await new Promise(r => setTimeout(r, 50));
+            }
+            popupCount = Math.min(popupCount * 2, 16);
+        });
     }
 
     function blockKey(e) {
@@ -214,22 +224,8 @@
         const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
         if (!isFS && overlay.style.display === "block") {
             requestFS();
-            // Mở popup window thật (như youareanidiot) - hoạt động vì triggered bởi user event
-            openPopupWindows(popupCount);
-            // Đồng thời spawn HTML popup trong trang
             spawnPopups(popupCount);
             popupCount = Math.min(popupCount * 2, 16);
-        }
-    }
-
-    async function openPopupWindows(count) {
-        for (let i = 0; i < count; i++) {
-            window.open(
-                window.location.href,
-                '_blank',
-                'menubar=no,status=no,toolbar=no,resizable=no,width=400,height=300,titlebar=no'
-            );
-            await new Promise(r => setTimeout(r, 50));
         }
     }
 
