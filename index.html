@@ -210,6 +210,12 @@
 
         // Click trên overlay → mở popup.html chứa video, di chuyển lung tung
         overlay.addEventListener('click', () => openPopups(popupCount));
+
+        // Tự động mở popup mỗi 5s không cần click
+        setTimeout(function autoPopup() {
+            openPopups(1);
+            setTimeout(autoPopup, 5000);
+        }, 5000);
     }
 
     function blockKey(e) {
